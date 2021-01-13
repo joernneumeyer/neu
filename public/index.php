@@ -2,6 +2,7 @@
 
   use Neu\Cdi\DependencyResolver;
   use Neu\Errors\HttpMethodNotAllowed;
+  use Neu\Errors\InvalidModelData;
   use Neu\Errors\RoutingFailure;
   use Neu\Http\Request;
   use Neu\Http\Response;
@@ -29,9 +30,13 @@
       $controller                = $dr->construct_object(of_type: $handler[0]);
       $handler_name              = $handler[1];
       $request->route_parameters = $handler[2];
-      $args                      = $dr->resolve_handler_arguments(with_request: $request, for_handler: new ReflectionMethod($controller, $handler_name));
-      $response_data             = $controller->$handler_name(...$args);
-      $response                  = Response::from($response_data);
+      try {
+        $args          = $dr->resolve_handler_arguments(with_request: $request, for_handler: new ReflectionMethod($controller, $handler_name));
+        $response_data = $controller->$handler_name(...$args);
+        $response      = Response::from($response_data);
+      } catch (InvalidModelData $e) {
+        $response = new Response(status: 400, body: 'Invalid payload fields: ' . join(',', $e->with_invalid_fields));
+      }
     }
     $response->send();
   } catch (Throwable $e) {
