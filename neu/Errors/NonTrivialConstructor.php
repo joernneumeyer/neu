@@ -1,9 +1,11 @@
 <?php
 
+
   namespace Neu\Errors;
+
 
   use Exception;
 
-  class InvalidRouteSupplied extends Exception {
+  class NonTrivialConstructor extends Exception {
 
   }

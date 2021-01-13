@@ -8,6 +8,8 @@
     ['/world', '/world'],
     ['/foo/bar', '/foo/bar'],
     ['/foo/abc-bar', '/foo/abc-bar'],
+    ['/foo/abc-bar/', '/foo/abc-bar'],
+    ['/foo/abc-bar', '/foo/abc-bar/'],
   ];
 
   $routes_invalid = [

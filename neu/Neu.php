@@ -2,7 +2,7 @@
 
   namespace Neu;
 
-  use Neu\Http\Controller;
+  use Neu\Annotations\Controller;
   use RecursiveDirectoryIterator;
   use RecursiveIteratorIterator;
   use ReflectionClass;

@@ -4,6 +4,6 @@
 
   use Exception;
 
-  class InvalidRouteSupplied extends Exception {
+  class InvalidDependencyLoadMode extends Exception {
 
   }

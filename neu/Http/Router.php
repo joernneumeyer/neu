@@ -2,8 +2,10 @@
 
   namespace Neu\Http;
 
+  use Neu\Annotations\Controller;
+  use Neu\Errors\HttpMethodNotAllowed;
   use Neu\Errors\InvalidRouteSupplied;
-  use Neu\Http\Route;
+  use Neu\Annotations\Route;
   use ReflectionClass;
   use ReflectionMethod;
 
@@ -46,17 +48,17 @@
           }
           $route = $route->newInstance();
           /** @var Route $route */
-          if (is_string($route->method)) {
-            if ($route->method !== $method) {
-              continue;
-            }
-          } else if (!in_array($method, $route->method)) {
-            continue;
-          }
-          $handler_route = $controller->path . $route->path;
-          $route_match = self::match_path($path, $handler_route);
+          $route_method_is_valid =
+            is_string($route->method)
+              ? $route->method === $method
+              : in_array($method, $route->method);
+          $handler_route         = $controller->path . $route->path;
+          $route_match           = self::match_path($path, $handler_route);
           if ($route_match !== false) {
-            return [$ref, $handler_method->getName(), $route_match];
+            if (!$route_method_is_valid) {
+              throw new HttpMethodNotAllowed();
+            }
+            return [$ref->getName(), $handler_method->getName(), $route_match];
           }
         }
       }
@@ -73,9 +75,11 @@
       if ($path === $route) {
         return [];
       }
-      $path_length = strlen($path);
+      $path = rtrim($path, '/');
+      $route = rtrim($route, '/');
+      $path_length  = strlen($path);
       $route_length = strlen($route);
-      $params = [];
+      $params       = [];
 
       for ($ri = 0, $pi = 0; $ri < $route_length && $pi < $path_length; ++$ri, ++$pi) {
         if ($ri >= $route_length || $pi >= $path_length) {
@@ -83,12 +87,14 @@
         }
         if ($route[$ri] === '{') {
           $parameter_start = $ri;
-          $brace_counter = 1;
+          $brace_counter   = 1;
           for (++$ri; $ri < $route_length; ++$ri) {
             if ($route[$ri] === '{') {
               ++$brace_counter;
-            } else if ($route[$ri] === '}') {
-              --$brace_counter;
+            } else {
+              if ($route[$ri] === '}') {
+                --$brace_counter;
+              }
             }
             if ($brace_counter === 0) {
               break;
@@ -97,7 +103,7 @@
           if ($ri === $route_length) {
             throw new InvalidRouteSupplied();
           }
-          $parameter = explode(
+          $parameter             = explode(
             separator: ':',
             string: substr($route, offset: $parameter_start + 1, length: $ri - $parameter_start - 1),
             limit: 2
@@ -105,12 +111,14 @@
           $parameter_value_start = $pi;
           ++$ri;
           if ($ri >= $route_length) {
-            for (; $pi < $path_length && $path[$pi] !== '/'; ++$pi);
+            for (; $pi < $path_length && $path[$pi] !== '/'; ++$pi) {
+              ;
+            }
             if ($pi === $path_length) {
               --$pi;
             }
           } else {
-            for (; $pi < $path_length ; ++$pi) {
+            for (; $pi < $path_length; ++$pi) {
               if ($path[$pi] === '/' || $route[$ri] === $path[$pi]) {
                 break;
               }
@@ -127,7 +135,7 @@
           if (isset($parameter[1])) {
             $matches = [];
             preg_match("/^$parameter[1]$/", $parameter_value, $matches);
-            if($matches === []) {
+            if ($matches === []) {
               return false;
             }
           }
@@ -143,8 +151,10 @@
       }
       if ($ri >= $route_length && $pi < $path_length) {
         return false;
-      } else if ($ri < $route_length && $pi >= $path_length) {
-        return false;
+      } else {
+        if ($ri < $route_length && $pi >= $path_length) {
+          return false;
+        }
       }
       return $params;
     }

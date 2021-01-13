@@ -1,5 +1,5 @@
 <?php
-  namespace Neu\Http;
+  namespace Neu\Annotations;
 
   use Attribute;
 
