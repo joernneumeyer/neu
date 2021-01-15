@@ -19,7 +19,6 @@
   use ReflectionMethod;
 
   class DependencyResolver {
-    public const Primitives = ['int', 'string', 'float', 'bool'];
     public const LoadUnique = 0;
     public const LoadShared = 1;
 
@@ -31,10 +30,19 @@
     public function __construct() {
     }
 
+    /**
+     * @param Closure $factory
+     * @param string $for_type
+     * @throws \Exception
+     */
     public function register(Closure $factory, string $for_type) {
       $this->providers[$for_type] = new DependencyProvider($factory, $for_type);
     }
 
+    /**
+     * @param string $for_type
+     * @return bool
+     */
     public function has_factory(string $for_type): bool {
       return isset($this->providers[$for_type]);
     }
@@ -56,8 +64,8 @@
         }
       }
       return match ($with_load_mode) {
-        self::LoadUnique => $this->providers[$for_type]->construct_object(),
-        self::LoadShared => $this->providers[$for_type]->load_shared_object(),
+        self::LoadUnique => $this->providers[$for_type]->constructObject(),
+        self::LoadShared => $this->providers[$for_type]->loadSharedObject(),
         default => throw new InvalidDependencyLoadMode(),
       };
     }
@@ -106,7 +114,7 @@
         $is_body  = $param->getAttributes(Body::class);
         if ($is_param) {
           /** @var Param $param_attribute */
-          $param_attribute = $is_param[0];
+          $param_attribute = $is_param[0]->newInstance();
           $param_name      = $param_attribute->name ?: $param->getName();
           $param_value     = $with_request->param($param_name, $param_attribute->default);
           $args[]          = $param_value;
@@ -114,7 +122,7 @@
         }
         if ($is_query) {
           /** @var Query $query_attribute */
-          $query_attribute = $is_query[0];
+          $query_attribute = $is_query[0]->newInstance();
           $param_name      = $query_attribute->name ?: $param->getName();
           $param_value     = $with_request->query($param_name, $query_attribute->default);
           $args[]          = $param_value;

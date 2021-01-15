@@ -17,13 +17,19 @@
       }
     }
 
-    public function construct_object(): object {
+    /**
+     * @return object
+     */
+    public function constructObject(): object {
       return ($this->factory)();
     }
 
-    public function load_shared_object() {
+    /**
+     * @return object|null
+     */
+    public function loadSharedObject(): ?object {
       if (is_null($this->shared_instance)) {
-        $this->shared_instance = $this->construct_object();
+        $this->shared_instance = $this->constructObject();
       }
       return $this->shared_instance;
     }

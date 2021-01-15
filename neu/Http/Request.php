@@ -8,9 +8,9 @@
     public function __construct(
       public string $method = 'GET',
       public string $path = '/',
-      public array $route_parameters = [],
+      public array $params = [],
       public array $query = [],
-      public array $body = [],
+      public array|string $body = [],
     ) {
     }
 
@@ -33,7 +33,7 @@
      * @return bool
      */
     public function has_param(string $name): bool {
-      return isset($this->route_parameters[$name]);
+      return isset($this->params[$name]);
     }
 
     public function has_query(string $name): bool {
@@ -52,7 +52,7 @@
      * @return mixed|null
      */
     public function param(string $name, $default = null): mixed {
-      return $this->route_parameters[$name] ?? $default;
+      return $this->params[$name] ?? $default;
     }
 
     public function query(string $name, $default = null): mixed {

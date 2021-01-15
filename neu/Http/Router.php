@@ -58,7 +58,7 @@
             if (!$route_method_is_valid) {
               throw new HttpMethodNotAllowed();
             }
-            return [$ref->getName(), $handler_method->getName(), $route_match];
+            return [$ref->getName(), $handler_method, $route_match];
           }
         }
       }

@@ -10,12 +10,12 @@
   use Neu\Http\Request;
 
   class Model {
-    public static function toJson(mixed $model, bool $_is_final = true): float|int|bool|array|string|null|\stdClass {
+    public static function prepareForSerialization(mixed $model): float|int|bool|array|string|null|\stdClass {
       if (is_scalar($model)) {
         return $model;
       }
       if (is_array($model)) {
-        return pipe($model)->map(fn($m) => Model::toJson($m))->data();
+        return pipe($model)->map(fn($m) => Model::prepareForSerialization($m))->data();
       }
       if (is_null($model)) {
         return null;
@@ -33,10 +33,10 @@
         if (is_scalar($model_prop_value)) {
           $obj->{$prop->getName()} = $model_prop_value;
         } else {
-          $obj->{$prop->getName()} = self::toJson($model_prop_value, false);
+          $obj->{$prop->getName()} = self::prepareForSerialization($model_prop_value);
         }
       }
-      return $_is_final ? json_encode($obj) : $obj;
+      return $obj;
     }
 
     /**
@@ -53,7 +53,11 @@
       } else if (is_array($data)) {
         $data = json_decode(json_encode($data));
       }
-      $type_ref = new \ReflectionClass($into_type);
+      try {
+        $type_ref = new \ReflectionClass($into_type);
+      } catch (\ReflectionException $e) {
+        return $data;
+      }
       if (($type_ref->getConstructor()?->getNumberOfRequiredParameters() ?? 0) !== 0) {
         throw new NonTrivialConstructor();
       }

@@ -6,7 +6,7 @@
 
   class SimpleUser {
     #[ModelProperty]
-    private string $username = '';
+    public string $username = 'John';
     #[ModelProperty]
     private ?Address $address = null;
   }

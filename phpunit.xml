@@ -13,6 +13,11 @@
         <include>
             <directory suffix=".php">./app</directory>
             <directory suffix=".php">./src</directory>
+            <directory suffix=".php">./neu</directory>
         </include>
+        <exclude>
+            <directory>./neu/Annotations</directory>
+            <directory>./neu/Errors</directory>
+        </exclude>
     </coverage>
 </phpunit>

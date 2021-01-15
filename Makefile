@@ -1,4 +1,7 @@
 
 
 dev-live:
-	php8.0 -S [::]:8000 dev-router.php -t public
+	php -S [::]:8000 dev-router.php -t public
+
+coverage:
+	php -S [::]:8001 -t coverage

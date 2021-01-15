@@ -1,32 +1,33 @@
 {
-    "name": "joernneumeyer/neu",
-    "description": "A new PHP framework, embracing and building upon PHP's latest features.",
-    "type": "project",
-    "license": "LGPL-3.0-or-later",
-    "authors": [
-        {
-            "name": "Jörn Neumeyer",
-            "email": "contact@joern-neumeyer.de"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "Neu\\": "neu/",
-            "App\\": "app/"
-        },
-        "files": [
-            "neu/debugging.php",
-            "neu/aliases.php"
-        ]
-    },
-    "require-dev": {
-        "pestphp/pest": "^1.0"
-    },
-    "require": {
-        "php": "^8.0",
-        "nesbot/carbon": "^2.43"
-    },
-    "scripts": {
-        "test": "pest"
+  "name": "joernneumeyer/neu",
+  "description": "A new PHP framework, embracing and building upon PHP's latest features.",
+  "type": "project",
+  "license": "LGPL-3.0-or-later",
+  "authors": [
+    {
+      "name": "Jörn Neumeyer",
+      "email": "contact@joern-neumeyer.de"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Neu\\": "neu/",
+      "App\\": "app/"
+    },
+    "files": [
+      "neu/debugging.php",
+      "neu/aliases.php"
+    ]
+  },
+  "require-dev": {
+    "pestphp/pest": "^1.0"
+  },
+  "require": {
+    "php": "^8.0",
+    "nesbot/carbon": "^2.43",
+    "ext-simplexml": "*"
+  },
+  "scripts": {
+    "test": "pest --min=70 --coverage"
+  }
 }

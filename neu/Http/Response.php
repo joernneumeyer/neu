@@ -4,18 +4,20 @@
   namespace Neu\Http;
 
 
+  use Neu\Annotations\Produces;
+  use Neu\Annotations\Status;
   use Neu\Model;
 
   class Response {
     public function __construct(
       public int $status = StatusCode::Ok,
       public string $status_text = 'OK',
-      public string $body = '',
+      public mixed $body = '',
       public array $headers = [],
     ) {
     }
 
-    public function header(string $name, ?string $value): Response|string {
+    public function header(string $name, ?string $value = null): Response|string {
       if ($value) {
         $this->headers[$name] = $value;
         return $this;
@@ -24,7 +26,7 @@
       }
     }
 
-    public function status(?int $code): Response|int {
+    public function status(?int $code = null): Response|int {
       if ($code) {
         $this->status = $code;
         return $this;
@@ -33,24 +35,25 @@
       }
     }
 
-    public static function from(mixed $result): Response|null {
-      if ($result instanceof Response) {
-        return $result;
+    /**
+     * @param \ReflectionMethod $forHandler
+     * @return $this
+     */
+    public function applyHandlerAnnotations(\ReflectionMethod $forHandler): self {
+      if ($status = $forHandler->getAttributes(Status::class)) {
+        $this->status = $status[0]->newInstance()->code;
       }
-      if (is_string($result)) {
-        return new Response(
-          body: $result,
-          headers: ['Content-Type' => ContentType::TextPlain]
-        );
+      if ($contentType = $forHandler->getAttributes(Produces::class)) {
+        $contentType = $contentType[0]->newInstance()->contentType;
+        $this->headers['Content-Type'] = $contentType;
+        $bodyModel = Model::prepareForSerialization($this->body);
+        $this->body = match ($contentType) {
+          ContentType::ApplicationJson => json_encode($bodyModel),
+          ContentType::ApplicationXml => preparedModelToXml($bodyModel, tag: get_class($this->body))->asXML(),
+          default => (string)$this->body
+        };
       }
-      if (is_object($result)) {
-        return new Response(
-          body: Model::toJson($result),
-          headers: ['Content-Type' => 'application/json']
-        );
-      }
-
-      return null;
+      return $this;
     }
 
     public function send(): void {

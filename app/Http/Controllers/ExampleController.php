@@ -9,10 +9,17 @@
   use Neu\Annotations\Produces;
   use Neu\Annotations\Route;
   use Neu\Annotations\Status;
+  use Neu\Dal\ModelRepository;
+  use Neu\Http\ContentType;
   use Neu\Http\StatusCode;
 
   #[Controller(path: '/moinsen')]
   class ExampleController {
+    public function __construct(
+      private ModelRepository $repository
+    ) {
+    }
+
     #[Route(method: 'GET', path: '/{username}')]
     public function example(#[Param] string $username, #[Query] ?int $bar) {
       $response = "Hello, $username!";
@@ -24,6 +31,7 @@
 
     #[Route(method: 'POST')]
     #[Status(code: StatusCode::Created)]
+    #[Produces(contentType: ContentType::ApplicationXml)]
     public function example_post(#[Body] SimpleUser $user) {
       return $user;
     }

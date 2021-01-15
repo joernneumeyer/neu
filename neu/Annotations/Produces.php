@@ -7,6 +7,6 @@
 
   #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
   class Produces {
-    public function __construct(public string $content_type) {
+    public function __construct(public string $contentType) {
     }
   }

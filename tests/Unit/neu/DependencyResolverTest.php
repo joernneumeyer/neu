@@ -1,7 +1,11 @@
 <?php
 
-  // --min=70 --coverage --coverage-html coverage
-
+  use Neu\Annotations\Controller;
+  use Neu\Annotations\HandlerParameters\Body;
+  use Neu\Annotations\HandlerParameters\Param;
+  use Neu\Annotations\HandlerParameters\Query;
+  use Neu\Annotations\ModelProperty;
+  use Neu\Annotations\Route;
   use Neu\Cdi\DependencyResolver;
   use Neu\Errors\InvalidDependencyLoadMode;
   use Neu\Errors\TryToConstructUnregisteredDependency;
@@ -26,6 +30,27 @@
 
   class DoesNotHaveAnAttachedType {
     public function __construct($foo) {
+    }
+  }
+
+  class SampleRequestBody {
+    public function __construct(
+      #[ModelProperty] public int $age = 0,
+      #[ModelProperty] public string $username = '',
+    ) {
+    }
+  }
+
+  #[Controller]
+  class SomeController {
+    #[Route(method: 'GET', path: '/{username}')]
+    public function foo(#[Param] string $username, #[Query] string $id, #[Body] SampleRequestBody $body) {
+
+    }
+
+    #[Route(method: 'GET')]
+    public function arbitraryBody(#[Body] $body) {
+
     }
   }
 
@@ -81,3 +106,24 @@
   it('should throw, if the constructor contains a parameter, without a type', function () {
     $this->dr->construct_object(DoesNotHaveAnAttachedType::class);
   })->throws(UnresolvableDependencyType::class);
+
+  it('should properly arguments for a handler', function () {
+    $controller = new SomeController();
+    $body = ['age' => 17, 'username' => 'johnny'];
+    $request    = new Request(params: ['username' => 'foobar'], query: ['id' => '4'], body: $body);
+    $handler = (new ReflectionObject($controller))->getMethod('foo');
+    $args = $this->dr->resolve_handler_arguments(with_request: $request, for_handler: $handler);
+    $expected_result = ['foobar', '4', new SampleRequestBody(17, 'johnny')];
+    expect($args)->toMatchArray($expected_result);
+  });
+
+  it('should resolve the body to stdClass, if no type has been specified', function () {
+    $controller = new SomeController();
+    $body = ['age' => 17, 'username' => 'johnny'];
+    $bodyObject = (object)$body;
+    $request    = new Request(body: $body);
+    $handler = (new ReflectionObject($controller))->getMethod('arbitraryBody');
+    [$resolvedBody] = $this->dr->resolve_handler_arguments(with_request: $request, for_handler: $handler);
+    expect($resolvedBody)->toBeInstanceOf(stdClass::class);
+    expect($resolvedBody)->toEqual($bodyObject);
+  });

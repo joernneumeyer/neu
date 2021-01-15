@@ -15,8 +15,11 @@
       return new DataPipe($mapped);
     }
 
-    public function filter(callable $cb): DataPipe {
+    public function filter(callable $cb, bool $preserveKeys = false): DataPipe {
       $filtered = array_filter($this->data, $cb);
+      if (!$preserveKeys) {
+        $filtered = [...$filtered];
+      }
       return new DataPipe($filtered);
     }
 
@@ -32,4 +35,7 @@
       return array_values($this->data);
     }
 
+    public function join(string $glue): string {
+      return join($glue, $this->data);
+    }
   }
