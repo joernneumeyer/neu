@@ -8,8 +8,10 @@
   use Neu\Annotations\HandlerParameters\Body;
   use Neu\Annotations\HandlerParameters\Param;
   use Neu\Annotations\HandlerParameters\Query;
+  use Neu\Annotations\InjectUnique;
   use Neu\Errors\InvalidDependencyLoadMode;
   use Neu\Errors\TryToConstructUnregisteredDependency;
+  use Neu\Errors\TypeMismatch;
   use Neu\Errors\UnresolvableDependencyType;
   use Neu\Http\Request;
   use Neu\Model;
@@ -33,7 +35,7 @@
     /**
      * @param Closure $factory
      * @param string $for_type
-     * @throws \Exception
+     * @throws TypeMismatch
      */
     public function register(Closure $factory, string $for_type) {
       $this->providers[$for_type] = new DependencyProvider($factory, $for_type);
@@ -95,7 +97,10 @@
         if (is_null($param_type_name)) {
           throw new UnresolvableDependencyType();
         }
-        $args[] = $this->has_factory($param_type_name) ? $this->construct_dependency($param_type_name) : $this->construct_object($param_type_name);
+        $load_mode = count($param->getAttributes(InjectUnique::class)) > 0
+          ? self::LoadUnique
+          : self::LoadShared;
+        $args[] = $this->has_factory($param_type_name) ? $this->construct_dependency($param_type_name, with_load_mode: $load_mode) : $this->construct_object($param_type_name);
       }
       return $ref_class->newInstance(...$args);
     }
