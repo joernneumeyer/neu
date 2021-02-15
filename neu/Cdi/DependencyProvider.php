@@ -5,6 +5,7 @@
 
 
   use Closure;
+  use Neu\Errors\TypeMismatch;
 
   class DependencyProvider {
     public function __construct(
@@ -13,7 +14,7 @@
       public ?object $shared_instance = null
     ) {
       if (!is_null($this->shared_instance) && get_class($this->shared_instance) !== $this->for_type) {
-        throw new \Exception('Trying to set shared instance with type mismatch!');
+        throw new TypeMismatch('Trying to set shared instance with type mismatch!');
       }
     }
 
