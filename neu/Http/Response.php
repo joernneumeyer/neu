@@ -11,7 +11,6 @@
   class Response {
     public function __construct(
       public int $status = StatusCode::Ok,
-      public string $status_text = 'OK',
       public mixed $body = '',
       public array $headers = [],
     ) {
@@ -24,6 +23,13 @@
       } else {
         return $this->headers[$name];
       }
+    }
+
+    public function contentType(?string $contentType): string|Response {
+      if ($contentType) {
+        return $this->header('Content-Type', $contentType);
+      }
+      return $this->header('Content-Type');
     }
 
     public function status(?int $code = null): Response|int {
@@ -68,8 +74,7 @@
 
     public static function not_found(): Response {
       return new Response(
-        status: StatusCode::NotFound,
-        status_text: 'Not Found'
+        status: StatusCode::NotFound
       );
     }
   }
