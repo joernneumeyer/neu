@@ -5,6 +5,7 @@
 
 
   use Neu\Cdi\DependencyResolver;
+  use Neu\Dal\ModelRepository;
   use Neu\Errors\HttpMethodNotAllowed;
   use Neu\Errors\InvalidModelData;
   use Neu\Errors\RoutingFailure;
@@ -16,17 +17,19 @@
 
   class Kernel {
     private Router $router;
+    private DependencyResolver $dr;
 
     public function boot() {
       $controller_refs = Neu::load_controller_reflections();
       $this->router    = Router::for_controller_reflections($controller_refs);
+      $this->dr = new DependencyResolver();
+      $this->dr->register(fn() => new ModelRepository(), ModelRepository::class);
     }
 
     public function processRequest(Request $request): Response {
       try {
         $request = Request::from_global_state();
-        $dr      = new DependencyResolver();
-        $dr->register(fn() => $request, Request::class);
+        $this->dr->register(fn() => $request, Request::class);
         try {
           $handler = $this->router->fetch_handler($request->path, $request->method);
         } catch (HttpMethodNotAllowed $e) {
@@ -35,13 +38,13 @@
         if ($handler === null) {
           return Response::not_found();
         } else {
-          $controller = $dr->construct_object(of_type: $handler[0]);
+          $controller = $this->dr->construct_object(of_type: $handler[0]);
           /** @var ReflectionMethod $handler_method */
           $handler_method  = $handler[1];
           $request->params = $handler[2];
           $handler_name    = $handler_method->getName();
           try {
-            $args          = $dr->resolve_handler_arguments(with_request: $request, for_handler: $handler_method);
+            $args          = $this->dr->resolve_handler_arguments(with_request: $request, for_handler: $handler_method);
             $response_data = $controller->$handler_name(...$args);
             return (new Response(body: $response_data))->applyHandlerAnnotations(forHandler: $handler_method);
           } catch (InvalidModelData $e) {
