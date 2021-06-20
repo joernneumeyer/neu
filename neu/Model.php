@@ -7,7 +7,7 @@
   use Neu\Annotations\ModelProperty;
   use Neu\Errors\InvalidModelData;
   use Neu\Errors\NonTrivialConstructor;
-  use Neu\Http\Request;
+  use function Neu\Pipe7\pipe;
 
   class Model {
     public static function prepareForSerialization(mixed $model): float|int|bool|array|string|null|\stdClass {
@@ -15,7 +15,7 @@
         return $model;
       }
       if (is_array($model)) {
-        return pipe($model)->map(fn($m) => Model::prepareForSerialization($m))->data();
+        return pipe($model)->map(fn($m) => Model::prepareForSerialization($m))->toArray();
       }
       if (is_null($model)) {
         return null;
@@ -83,7 +83,7 @@
             $sub_object = self::from($data_value, $prop_type);
             $prop->setValue($instance, $sub_object);
           } catch (InvalidModelData $e) {
-            $sub_errors = pipe($e->with_invalid_fields)->map(fn($field) => $prop->getName() . '.' . $field)->data();
+            $sub_errors = pipe($e->with_invalid_fields)->map(fn($field) => $prop->getName() . '.' . $field)->toArray();
             array_push($invalid_properties, ...$sub_errors);
           }
         }
