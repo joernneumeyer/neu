@@ -61,50 +61,50 @@
   });
 
   it('should generate instances of the proper type', function () {
-    $req = $this->dr->construct_dependency(for_type: Request::class);
-    $res = $this->dr->construct_dependency(for_type: Response::class);
+    $req = $this->dr->constructDependency(for_type: Request::class);
+    $res = $this->dr->constructDependency(for_type: Response::class);
     expect($req)->toBeInstanceOf(Request::class);
     expect($res)->toBeInstanceOf(Response::class);
   });
 
   it('should generate shared instances by default', function () {
-    $req_a       = $this->dr->construct_dependency(for_type: Request::class);
-    $req_b       = $this->dr->construct_dependency(for_type: Request::class);
+    $req_a       = $this->dr->constructDependency(for_type: Request::class);
+    $req_b       = $this->dr->constructDependency(for_type: Request::class);
     $req_a->path = '/foobar';
     expect($req_b->path)->toEqual('/foobar');
   });
 
   it('should also be able to construct unique instances', function () {
-    $req_a       = $this->dr->construct_dependency(for_type: Request::class, with_load_mode: DependencyResolver::LoadUnique);
-    $req_b       = $this->dr->construct_dependency(for_type: Request::class, with_load_mode: DependencyResolver::LoadUnique);
+    $req_a       = $this->dr->constructDependency(for_type: Request::class, with_load_mode: DependencyResolver::LoadUnique);
+    $req_b       = $this->dr->constructDependency(for_type: Request::class, with_load_mode: DependencyResolver::LoadUnique);
     $req_a->path = '/foobar';
     expect($req_b->path)->toEqual('/');
   });
 
   it('should throw, if an instance of an unknown type is requested', function () {
-    $this->dr->construct_dependency(for_type: DependencyResolver::class);
+    $this->dr->constructDependency(for_type: DependencyResolver::class);
   })->throws(TryToConstructUnregisteredDependency::class);
 
   it('should throw, if an unsupported load mode is provided', function () {
-    $this->dr->construct_dependency(for_type: Request::class, with_load_mode: -1);
+    $this->dr->constructDependency(for_type: Request::class, with_load_mode: -1);
   })->throws(InvalidDependencyLoadMode::class);
 
   it('should be able to resolve dependencies from registered providers', function () {
-    $obj = $this->dr->construct_object(ClassWithDependencies::class);
+    $obj = $this->dr->constructObject(ClassWithDependencies::class);
     expect($obj)->toBeInstanceOf(ClassWithDependencies::class);
   });
 
   it('should be able to resolve dependencies from unregistered types, which can be resolved', function () {
-    $obj = $this->dr->construct_object(UsesUnregisteredType::class);
+    $obj = $this->dr->constructObject(UsesUnregisteredType::class);
     expect($obj)->toBeInstanceOf(UsesUnregisteredType::class);
   });
 
   it('should throw, if the constructor contains a parameter, which is of a primitive type', function () {
-    $this->dr->construct_object(UsesPrimitiveParameters::class);
+    $this->dr->constructObject(UsesPrimitiveParameters::class);
   })->throws(UnresolvableDependencyType::class);
 
   it('should throw, if the constructor contains a parameter, without a type', function () {
-    $this->dr->construct_object(DoesNotHaveAnAttachedType::class);
+    $this->dr->constructObject(DoesNotHaveAnAttachedType::class);
   })->throws(UnresolvableDependencyType::class);
 
   it('should properly arguments for a handler', function () {
@@ -112,7 +112,7 @@
     $body = ['age' => 17, 'username' => 'johnny'];
     $request    = new Request(params: ['username' => 'foobar'], query: ['id' => '4'], body: $body);
     $handler = (new ReflectionObject($controller))->getMethod('foo');
-    $args = $this->dr->resolve_handler_arguments(with_request: $request, for_handler: $handler);
+    $args = $this->dr->resolveHandlerArguments(with_request: $request, for_handler: $handler);
     $expected_result = ['foobar', '4', new SampleRequestBody(17, 'johnny')];
     expect($args)->toMatchArray($expected_result);
   });
@@ -123,7 +123,7 @@
     $bodyObject = (object)$body;
     $request    = new Request(body: $body);
     $handler = (new ReflectionObject($controller))->getMethod('arbitraryBody');
-    [$resolvedBody] = $this->dr->resolve_handler_arguments(with_request: $request, for_handler: $handler);
+    [$resolvedBody] = $this->dr->resolveHandlerArguments(with_request: $request, for_handler: $handler);
     expect($resolvedBody)->toBeInstanceOf(stdClass::class);
     expect($resolvedBody)->toEqual($bodyObject);
   });

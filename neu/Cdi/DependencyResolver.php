@@ -45,7 +45,7 @@
      * @param string $for_type
      * @return bool
      */
-    public function has_factory(string $for_type): bool {
+    public function hasFactory(string $for_type): bool {
       return isset($this->providers[$for_type]);
     }
 
@@ -57,7 +57,7 @@
      * @throws InvalidDependencyLoadMode
      * @throws TryToConstructUnregisteredDependency
      */
-    public function construct_dependency(string $for_type, int $with_load_mode = self::LoadShared, bool $return_null_dont_throw = false): object|null {
+    public function constructDependency(string $for_type, int $with_load_mode = self::LoadShared, bool $return_null_dont_throw = false): object|null {
       if (!isset($this->providers[$for_type])) {
         if ($return_null_dont_throw) {
           return null;
@@ -80,7 +80,7 @@
      * @throws UnresolvableDependencyType
      * @throws ReflectionException
      */
-    public function construct_object(string $of_type): object|null {
+    public function constructObject(string $of_type): object|null {
       try {
         $ref_class = new ReflectionClass($of_type);
       } catch (ReflectionException $e) {
@@ -100,7 +100,7 @@
         $load_mode = count($param->getAttributes(InjectUnique::class)) > 0
           ? self::LoadUnique
           : self::LoadShared;
-        $args[] = $this->has_factory($param_type_name) ? $this->construct_dependency($param_type_name, with_load_mode: $load_mode) : $this->construct_object($param_type_name);
+        $args[] = $this->hasFactory($param_type_name) ? $this->constructDependency($param_type_name, with_load_mode: $load_mode) : $this->constructObject($param_type_name);
       }
       return $ref_class->newInstance(...$args);
     }
@@ -110,7 +110,7 @@
      * @param ReflectionMethod $for_handler
      * @return array
      */
-    public function resolve_handler_arguments(Request $with_request, ReflectionMethod $for_handler): array {
+    public function resolveHandlerArguments(Request $with_request, ReflectionMethod $for_handler): array {
       $params = $for_handler->getParameters();
       $args   = [];
       foreach ($params as $param) {
