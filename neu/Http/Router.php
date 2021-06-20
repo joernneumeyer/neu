@@ -8,6 +8,7 @@
   use Neu\Annotations\Route;
   use ReflectionClass;
   use ReflectionMethod;
+  use function Neu\Pipe7\pipe;
 
   class Router {
     /**
@@ -30,12 +31,13 @@
      * @param string $method
      * @return array|null
      * @throws InvalidRouteSupplied
+     * @throws HttpMethodNotAllowed
      */
     public function fetch_handler(string $path, string $method): array|null {
       foreach ($this->controller_refs as $ref) {
         $handler_methods = pipe($ref->getMethods())
           ->filter(fn(ReflectionMethod $method) => $method->getAttributes(Route::class))
-          ->data();
+          ->toArray();
         /** @var Controller $controller */
         $controller = $ref->getAttributes(Controller::class)[0]->newInstance();
 
