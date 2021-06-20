@@ -55,6 +55,7 @@
               ? $route->method === $method
               : in_array($method, $route->method);
           $handler_route         = $controller->path . $route->path;
+          $handler_route = str_replace('//', '/', $handler_route);
           $route_match           = self::match_path($path, $handler_route);
           if ($route_match !== false) {
             if (!$route_method_is_valid) {
