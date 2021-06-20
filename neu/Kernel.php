@@ -4,8 +4,8 @@
   namespace Neu;
 
 
+  use App\DependencyFactory;
   use Neu\Cdi\DependencyResolver;
-  use Neu\Dal\ModelRepository;
   use Neu\Errors\HttpMethodNotAllowed;
   use Neu\Errors\InvalidModelData;
   use Neu\Errors\RoutingFailure;
@@ -23,7 +23,14 @@
       $controller_refs = Neu::load_controller_reflections();
       $this->router    = Router::for_controller_reflections($controller_refs);
       $this->dr = new DependencyResolver();
-      $this->dr->register(fn() => new ModelRepository(), ModelRepository::class);
+      $userDependencies = (new \ReflectionClass(DependencyFactory::class))->getMethods(ReflectionMethod::IS_STATIC | ReflectionMethod::IS_PUBLIC);
+      foreach ($userDependencies as $dep) {
+        if (!$dep->hasReturnType()) {
+          throw new \Error('Trying to register factory "' . $dep->getName() . '", but it is missing a return type hint!');
+        } else {
+          $this->dr->register(factory: $dep->getClosure(), for_type: $dep->getReturnType()->getName());
+        }
+      }
     }
 
     public function processRequest(Request $request): Response {
