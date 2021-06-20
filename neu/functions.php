@@ -1,14 +1,8 @@
 <?php
 
-  use Neu\Data\DataPipe;
+  namespace Neu;
 
-  /**
-   * @param array $data
-   * @return DataPipe
-   */
-  function pipe(array $data): DataPipe {
-    return new DataPipe($data);
-  }
+  use SimpleXMLElement;
 
   function preparedModelToXml(object $obj, ?SimpleXMLElement $ref = null, string $tag = ''): SimpleXMLElement {
     if (str_contains($tag, '\\')) {
