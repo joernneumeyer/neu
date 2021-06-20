@@ -16,18 +16,21 @@
     },
     "files": [
       "neu/debugging.php",
-      "neu/aliases.php"
+      "neu/functions.php"
     ]
   },
   "require-dev": {
-    "pestphp/pest": "^1.0"
+    "pestphp/pest": "^1.0",
+    "phpstan/phpstan": "^0.12.90"
   },
   "require": {
     "php": "^8.0",
     "nesbot/carbon": "^2.43",
-    "ext-simplexml": "*"
+    "ext-simplexml": "*",
+    "neu/pipe7": "^0.3.0"
   },
   "scripts": {
-    "test": "pest --min=70 --coverage"
+    "test": "pest --min=70 --coverage",
+    "phpstan": "vendor/bin/phpstan analyse -c phpstan.neon"
   }
 }

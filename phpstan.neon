@@ -1,0 +1,8 @@
+parameters:
+    level: 6
+    paths:
+        - app
+        - neu
+        - tests
+    excludePaths:
+        - tests/Pest.php
