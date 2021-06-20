@@ -7,6 +7,7 @@
   use Neu\Annotations\Produces;
   use Neu\Annotations\Status;
   use Neu\Model;
+  use function Neu\preparedModelToXml;
 
   class Response {
     public function __construct(
