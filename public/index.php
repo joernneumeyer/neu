@@ -5,6 +5,7 @@
   use Neu\Http\StatusCode;
   use Neu\Kernel;
   use Neu\Neu;
+  use function Neu\Debug\niceResponseFromError;
 
   require_once join(DIRECTORY_SEPARATOR, [__DIR__, '..', 'vendor', 'autoload.php']);
   define('APP_ROOT', dirname(__DIR__));
