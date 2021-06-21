@@ -29,11 +29,12 @@
     /**
      * @param string $path
      * @param string $method
-     * @return array|null
+     * @return [string,ReflectionMethod,array<string, string>]|null
      * @throws InvalidRouteSupplied
      * @throws HttpMethodNotAllowed
      */
     public function fetch_handler(string $path, string $method): array|null {
+      $candidates = [];
       foreach ($this->controller_refs as $ref) {
         $handler_methods = pipe($ref->getMethods())
           ->filter(fn(ReflectionMethod $method) => $method->getAttributes(Route::class))
@@ -50,22 +51,29 @@
           }
           $route = $route->newInstance();
           /** @var Route $route */
-          $route_method_is_valid =
-            is_string($route->method)
-              ? $route->method === $method
-              : in_array($method, $route->method);
           $handler_route         = $controller->path . $route->path;
           $handler_route = str_replace('//', '/', $handler_route);
           $route_match           = self::match_path($path, $handler_route);
           if ($route_match !== false) {
-            if (!$route_method_is_valid) {
-              throw new HttpMethodNotAllowed();
-            }
-            return [$ref->getName(), $handler_method, $route_match];
+            $candidates[] = [$ref->getName(), $handler_method, $route_match];
           }
         }
       }
-      return null;
+      if ($candidates === []) {
+        return null;
+      }
+      foreach ($candidates as $candidate) {
+        /** @var Route $route */
+        $route = $candidate[1]->getAttributes(Route::class)[0]->newInstance();
+        $route_method_is_valid =
+            is_string($route->method)
+              ? $route->method === $method
+              : in_array($method, $route->method);
+        if ($route_method_is_valid) {
+          return $candidate;
+        }
+      }
+      throw new HttpMethodNotAllowed();
     }
 
     /**
