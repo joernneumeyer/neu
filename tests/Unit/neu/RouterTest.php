@@ -1,7 +1,22 @@
 <?php
 
+  use Neu\Annotations\Controller;
+  use Neu\Annotations\Route;
   use Neu\Errors\InvalidRouteSupplied;
   use Neu\Http\Router;
+  
+  #[Controller]
+  class RouterTestController {
+    #[Route(method: 'POST')]
+    public function postHandler() {
+      
+    }
+
+    #[Route(method: 'GET')]
+    public function getHandler() {
+      
+    }
+  }
 
   $routes_valid = [
     ['/hello', '/hello'],
@@ -82,3 +97,10 @@
   it('should throw, if a malformated route is supplied', function (string $route, string $path) {
     Router::match_path($path, $route);
   })->with($malformated_routes)->throws(InvalidRouteSupplied::class);
+  
+  it('should fetch the proper handler if multiple candidates for one path exist', function() {
+    $router = Router::for_controller_reflections([new ReflectionClass(RouterTestController::class)]);
+    [$name, $handler] = $router->fetch_handler('/', 'GET');
+    /** @var ReflectionMethod $handler */
+    expect($handler->getName())->toEqual('getHandler');
+  });
