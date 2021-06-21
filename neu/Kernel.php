@@ -1,8 +1,6 @@
 <?php
 
-
   namespace Neu;
-
 
   use App\DependencyFactory;
   use Neu\Cdi\DependencyResolver;
@@ -19,7 +17,11 @@
     private Router $router;
     private DependencyResolver $dr;
 
-    public function boot() {
+    /**
+     * @throws Errors\TypeMismatch
+     * @throws \ReflectionException
+     */
+    public function boot(): void {
       $controller_refs = Neu::load_controller_reflections();
       $this->router    = Router::for_controller_reflections($controller_refs);
       $this->dr = new DependencyResolver();
@@ -33,6 +35,16 @@
       }
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws Errors\InvalidDependencyLoadMode
+     * @throws Errors\InvalidRouteSupplied
+     * @throws Errors\TryToConstructUnregisteredDependency
+     * @throws Errors\TypeMismatch
+     * @throws Errors\UnresolvableDependencyType
+     * @throws \ReflectionException
+     */
     public function processRequest(Request $request): Response {
       try {
         $this->dr->register(fn() => $request, Request::class);
