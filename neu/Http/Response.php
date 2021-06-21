@@ -3,9 +3,9 @@
 
   namespace Neu\Http;
 
-
   use Neu\Annotations\Produces;
   use Neu\Annotations\Status;
+  use Neu\Errors\TypeMismatch;
   use Neu\Model;
   use function Neu\preparedModelToXml;
 
@@ -59,6 +59,18 @@
           ContentType::ApplicationXml => preparedModelToXml($bodyModel, tag: get_class($this->body))->asXML(),
           default => (string)$this->body
         };
+      } else {
+        $this->body = ($this->body instanceof \Stringable)
+          ? (string)$this->body
+          : throw new TypeMismatch(
+            'Tried to return body of type "'
+            . get_debug_type($this->body)
+            . '", but it is not Stringable and has no "Produces" annotation! Caused by handler: "'
+            . $forHandler->class
+            . '\\'
+            . $forHandler->name
+            . '".'
+          );
       }
       return $this;
     }
