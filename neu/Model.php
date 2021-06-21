@@ -10,6 +10,11 @@
   use function Neu\Pipe7\pipe;
 
   class Model {
+    /**
+     * @param mixed $model
+     * @return float|int|bool|array|string|\stdClass|null
+     * @throws Pipe7\UnprocessableObject
+     */
     public static function prepareForSerialization(mixed $model): float|int|bool|array|string|null|\stdClass {
       if (is_scalar($model)) {
         return $model;
