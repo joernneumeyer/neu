@@ -11,6 +11,7 @@
       public array $params = [],
       public array $query = [],
       public array|string $body = [],
+      public array $headers = [],
     ) {
     }
 
@@ -24,6 +25,7 @@
         path: $_SERVER['PHP_SELF'],
         query: $_GET,
         body: $post,
+        headers: getallheaders(),
       );
     }
 
