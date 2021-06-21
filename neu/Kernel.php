@@ -35,7 +35,6 @@
 
     public function processRequest(Request $request): Response {
       try {
-        $request = Request::from_global_state();
         $this->dr->register(fn() => $request, Request::class);
         try {
           $handler = $this->router->fetch_handler($request->path, $request->method);
