@@ -60,14 +60,15 @@
           default => (string)$this->body
         };
       } else {
-        $this->body = ($this->body instanceof \Stringable)
+        $body_is_valid = is_scalar($this->body) || (is_object($this->body) && $this->body instanceof \Stringable);
+        $this->body = $body_is_valid
           ? (string)$this->body
           : throw new TypeMismatch(
             'Tried to return body of type "'
             . get_debug_type($this->body)
             . '", but it is not Stringable and has no "Produces" annotation! Caused by handler: "'
             . $forHandler->class
-            . '\\'
+            . '::'
             . $forHandler->name
             . '".'
           );
