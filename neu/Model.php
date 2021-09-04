@@ -46,20 +46,20 @@
 
     /**
      * @param $data
-     * @param string $into_type
+     * @param string $intoType
      * @return object
      * @throws InvalidModelData
      * @throws NonTrivialConstructor
      * @throws \ReflectionException
      */
-    public static function from($data, string $into_type): object {
+    public static function from($data, string $intoType): object {
       if (is_string($data)) {
         $data = json_decode($data);
       } else if (is_array($data)) {
         $data = json_decode(json_encode($data));
       }
       try {
-        $type_ref = new \ReflectionClass($into_type);
+        $type_ref = new \ReflectionClass($intoType);
       } catch (\ReflectionException $e) {
         return $data;
       }
