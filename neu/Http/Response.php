@@ -7,6 +7,7 @@
   use Neu\Annotations\Status;
   use Neu\Errors\TypeMismatch;
   use Neu\Model;
+  use Stringable;
   use function Neu\preparedModelToXml;
 
   class Response {
@@ -42,46 +43,18 @@
       }
     }
 
-    /**
-     * @param \ReflectionMethod $forHandler
-     * @return $this
-     */
-    public function applyHandlerAnnotations(\ReflectionMethod $forHandler): self {
-      if ($status = $forHandler->getAttributes(Status::class)) {
-        $this->status = $status[0]->newInstance()->code;
-      }
-      if ($contentType = $forHandler->getAttributes(Produces::class)) {
-        $contentType = $contentType[0]->newInstance()->contentType;
-        $this->headers['Content-Type'] = $contentType;
-        $bodyModel = Model::prepareForSerialization($this->body);
-        $this->body = match ($contentType) {
-          ContentType::ApplicationJson => json_encode($bodyModel),
-          ContentType::ApplicationXml => preparedModelToXml($bodyModel, tag: get_class($this->body))->asXML(),
-          default => (string)$this->body
-        };
-      } else {
-        $body_is_valid = is_scalar($this->body) || (is_object($this->body) && $this->body instanceof \Stringable);
-        $this->body = $body_is_valid
-          ? (string)$this->body
-          : throw new TypeMismatch(
-            'Tried to return body of type "'
-            . get_debug_type($this->body)
-            . '", but it is not Stringable and has no "Produces" annotation! Caused by handler: "'
-            . $forHandler->class
-            . '::'
-            . $forHandler->name
-            . '".'
-          );
-      }
-      return $this;
-    }
-
     public function send(): void {
       foreach ($this->headers as $header => $value) {
         header($header . ': ' . $value);
       }
 
       http_response_code($this->status);
+
+      $body_is_valid = is_scalar($this->body) || $this->body instanceof Stringable;
+      if (!$body_is_valid) {
+        // TODO define proper semantic exception
+        throw new \Exception('Cannot send response, if the body cannot be converted to a string!');
+      }
 
       echo $this->body;
     }
