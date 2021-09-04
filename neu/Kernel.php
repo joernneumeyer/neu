@@ -3,10 +3,14 @@
   namespace Neu;
 
   use App\DependencyFactory;
+  use Neu\Annotations\UseMiddleware;
   use Neu\Cdi\DependencyResolver;
   use Neu\Errors\HttpMethodNotAllowed;
   use Neu\Errors\InvalidModelData;
   use Neu\Errors\RoutingFailure;
+  use Neu\Http\Middleware;
+  use Neu\Http\PostMiddleware;
+  use Neu\Http\PreMiddleware;
   use Neu\Http\Request;
   use Neu\Http\Response;
   use Neu\Http\Router;
@@ -17,6 +21,13 @@
     private Router $router;
     private DependencyResolver $dr;
 
+    private static function loadHandlerAnnotationProcessors() {
+      static $handlerAnnotationsProcessors;
+      if (!$handlerAnnotationsProcessors) {
+        $handlerAnnotationsProcessors = require implode(DIRECTORY_SEPARATOR, [__DIR__, 'handlerAnnotationProcessors.php']);
+      }
+      return $handlerAnnotationsProcessors;
+    }
     /**
      * @throws Errors\TypeMismatch
      * @throws \ReflectionException
@@ -30,7 +41,7 @@
         if (!$dep->hasReturnType()) {
           throw new \Error('Trying to register factory "' . $dep->getName() . '", but it is missing a return type hint!');
         } else {
-          $this->dr->register(factory: $dep->getClosure(), for_type: $dep->getReturnType()->getName());
+          $this->dr->register(factory: $dep->getClosure(), forType: $dep->getReturnType()->getName());
         }
       }
     }
@@ -56,15 +67,38 @@
         if ($handler === null) {
           return Response::not_found();
         } else {
-          $controller = $this->dr->constructObject(of_type: $handler[0]);
+          $controller = $this->dr->constructObject(ofType: $handler[0]);
           /** @var ReflectionMethod $handler_method */
           $handler_method  = $handler[1];
           $request->params = $handler[2];
           $handler_name    = $handler_method->getName();
+          $middlewareToApply = $handler_method->getAttributes(UseMiddleware::class);
+          foreach ($middlewareToApply as $m) {
+            /** @var UseMiddleware $useMiddlewareAttribute */
+            $useMiddlewareAttribute = $m->newInstance();
+            if (!is_subclass_of($useMiddlewareAttribute->name, PreMiddleware::class)) continue;
+            /** @var Middleware $middleware */
+            $middleware = $this->dr->constructObject(ofType: $useMiddlewareAttribute->name);
+            $middleware->apply();
+          }
           try {
-            $args          = $this->dr->resolveHandlerArguments(with_request: $request, for_handler: $handler_method);
+            $args          = $this->dr->resolveHandlerArguments(withRequest: $request, forHandler: $handler_method);
             $response_data = $controller->$handler_name(...$args);
-            return (new Response(body: $response_data))->applyHandlerAnnotations(forHandler: $handler_method);
+            $response = new Response(body: $response_data);
+            foreach (self::loadHandlerAnnotationProcessors() as $processorName => $processor) {
+              if (!$handler_method->getAttributes($processorName)) continue;
+              ($processor)($request, $response, $handler_method);
+            }
+            $this->dr->register(factory: fn() => $response, forType: Response::class);
+            foreach ($middlewareToApply as $m) {
+              /** @var UseMiddleware $useMiddlewareAttribute */
+              $useMiddlewareAttribute = $m->newInstance();
+              if (!is_subclass_of($useMiddlewareAttribute->name, PostMiddleware::class)) continue;
+              /** @var Middleware $middleware */
+              $middleware = $this->dr->constructObject(ofType: $useMiddlewareAttribute->name);
+              $middleware->apply();
+            }
+            return $response;
           } catch (InvalidModelData $e) {
             return new Response(status: 400, body: 'Invalid payload fields: ' . join(',', $e->with_invalid_fields));
           }
