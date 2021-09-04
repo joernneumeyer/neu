@@ -56,8 +56,8 @@
 
   beforeEach(function () {
     $this->dr = $dr = new DependencyResolver();
-    $dr->register(factory: fn() => new Request(), for_type: Request::class);
-    $dr->register(factory: fn() => new Response(), for_type: Response::class);
+    $dr->register(factory: fn() => new Request(), forType: Request::class);
+    $dr->register(factory: fn() => new Response(), forType: Response::class);
   });
 
   it('should generate instances of the proper type', function () {

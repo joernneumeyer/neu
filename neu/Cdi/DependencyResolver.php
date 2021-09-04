@@ -34,11 +34,11 @@
 
     /**
      * @param Closure $factory
-     * @param string $for_type
+     * @param string $forType
      * @throws TypeMismatch
      */
-    public function register(Closure $factory, string $for_type) {
-      $this->providers[$for_type] = new DependencyProvider($factory, $for_type);
+    public function register(Closure $factory, string $forType) {
+      $this->providers[$forType] = new DependencyProvider($factory, $forType);
     }
 
     /**
@@ -50,45 +50,45 @@
     }
 
     /**
-     * @param string $for_type
-     * @param int $with_load_mode
-     * @param bool $return_null_dont_throw
+     * @param string $forType
+     * @param int $withLoadMode
+     * @param bool $returnNullDontThrow
      * @return object|null
      * @throws InvalidDependencyLoadMode
      * @throws TryToConstructUnregisteredDependency
      */
-    public function constructDependency(string $for_type, int $with_load_mode = self::LoadShared, bool $return_null_dont_throw = false): object|null {
-      if (!isset($this->providers[$for_type])) {
-        if ($return_null_dont_throw) {
+    public function constructDependency(string $forType, int $withLoadMode = self::LoadShared, bool $returnNullDontThrow = false): object|null {
+      if (!isset($this->providers[$forType])) {
+        if ($returnNullDontThrow) {
           return null;
         } else {
           throw new TryToConstructUnregisteredDependency();
         }
       }
-      return match ($with_load_mode) {
-        self::LoadUnique => $this->providers[$for_type]->constructObject(),
-        self::LoadShared => $this->providers[$for_type]->loadSharedObject(),
+      return match ($withLoadMode) {
+        self::LoadUnique => $this->providers[$forType]->constructObject(),
+        self::LoadShared => $this->providers[$forType]->loadSharedObject(),
         default => throw new InvalidDependencyLoadMode(),
       };
     }
 
     /**
-     * @param string $of_type
+     * @param string $ofType
      * @return object|null
      * @throws InvalidDependencyLoadMode
      * @throws TryToConstructUnregisteredDependency
      * @throws UnresolvableDependencyType
      * @throws ReflectionException
      */
-    public function constructObject(string $of_type): object|null {
+    public function constructObject(string $ofType): object|null {
       try {
-        $ref_class = new ReflectionClass($of_type);
+        $ref_class = new ReflectionClass($ofType);
       } catch (ReflectionException $e) {
         throw new UnresolvableDependencyType(previous: $e);
       }
       $ctor_ref = $ref_class->getConstructor();
       if (is_null($ctor_ref) || $ctor_ref->getNumberOfParameters() === 0) {
-        return new $of_type;
+        return new $ofType;
       }
       $params = $ctor_ref->getParameters();
       $args   = [];
@@ -100,18 +100,18 @@
         $load_mode = count($param->getAttributes(InjectUnique::class)) > 0
           ? self::LoadUnique
           : self::LoadShared;
-        $args[] = $this->hasFactory($param_type_name) ? $this->constructDependency($param_type_name, with_load_mode: $load_mode) : $this->constructObject($param_type_name);
+        $args[] = $this->hasFactory($param_type_name) ? $this->constructDependency($param_type_name, withLoadMode: $load_mode) : $this->constructObject($param_type_name);
       }
       return $ref_class->newInstance(...$args);
     }
 
     /**
-     * @param Request $with_request
-     * @param ReflectionMethod $for_handler
+     * @param Request $withRequest
+     * @param ReflectionMethod $forHandler
      * @return array
      */
-    public function resolveHandlerArguments(Request $with_request, ReflectionMethod $for_handler): array {
-      $params = $for_handler->getParameters();
+    public function resolveHandlerArguments(Request $withRequest, ReflectionMethod $forHandler): array {
+      $params = $forHandler->getParameters();
       $args   = [];
       foreach ($params as $param) {
         $is_param = $param->getAttributes(Param::class);
@@ -121,7 +121,7 @@
           /** @var Param $param_attribute */
           $param_attribute = $is_param[0]->newInstance();
           $param_name      = $param_attribute->name ?: $param->getName();
-          $param_value     = $with_request->param($param_name, $param_attribute->default);
+          $param_value     = $withRequest->param($param_name, $param_attribute->default);
           $args[]          = $param_value;
           continue;
         }
@@ -129,16 +129,16 @@
           /** @var Query $query_attribute */
           $query_attribute = $is_query[0]->newInstance();
           $param_name      = $query_attribute->name ?: $param->getName();
-          $param_value     = $with_request->query($param_name, $query_attribute->default);
+          $param_value     = $withRequest->query($param_name, $query_attribute->default);
           $args[]          = $param_value;
           continue;
         }
         if ($is_body) {
           $param_type = $param->getType()?->getName();
           if (is_null($param_type)) {
-            $param_value = json_decode(json_encode($with_request->body));
+            $param_value = json_decode(json_encode($withRequest->body));
           } else {
-            $param_value = Model::from(data: $with_request->body, into_type: $param_type);
+            $param_value = Model::from(data: $withRequest->body, intoType: $param_type);
           }
           $args[] = $param_value;
         }
