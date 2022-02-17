@@ -30,7 +30,11 @@
     use function Neu\Pipe7\pipe;
 
     function loadFileSnippet(string $path, int $line, int $snippet_length = 5) {
-      $lines = explode("\n", file_get_contents($path));
+      try {
+        $lines = explode("\n", file_get_contents($path));
+      } catch (Throwable) {
+        throw new \RuntimeException("Cannot load file '$path'!");
+      }
       $mid = (int)ceil($snippet_length / 2);
       $low = $line - $mid;
       if ($low < 0) $low = 0;
