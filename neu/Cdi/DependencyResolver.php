@@ -37,8 +37,9 @@
      * @param string $forType
      * @throws TypeMismatch
      */
-    public function register(Closure $factory, string $forType) {
+    public function register(Closure $factory, string $forType): static {
       $this->providers[$forType] = new DependencyProvider($factory, $forType);
+      return $this;
     }
 
     /**
