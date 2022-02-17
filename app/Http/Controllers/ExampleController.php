@@ -1,42 +1,26 @@
 <?php
 
-
   namespace App\Http\Controllers;
 
-
-  use App\Http\Middleware\Cors;
-  use Neu\Annotations\Consumes;
   use Neu\Annotations\Controller;
   use Neu\Annotations\Produces;
   use Neu\Annotations\Route;
-  use Neu\Annotations\UseMiddleware;
   use Neu\Http\ContentType;
-  use Neu\Http\Request;
+  use Neu\View;
 
   #[Controller]
   class ExampleController {
     public function __construct(
-      private Request $request
+      private View $view,
     ) {
     }
 
-    /**
-     * @return int[]
-     */
-    #[Route(method: 'POST')]
-    #[Produces(ContentType::ApplicationJson)]
-    #[Consumes(ContentType::ApplicationJson)]
-    public function hello() {
-      return [1,2,3];
-    }
-
-    /**
-     *
-     */
     #[Route(method: 'GET')]
-    #[Produces(contentType: ContentType::TextPlain)]
-    #[UseMiddleware(name: Cors::class)]
-    public function someRandomHandler() {
-      return 'response from handler!';
+    #[Produces(ContentType::TextHtml)]
+    public function welcome(): string {
+      $this->view->assign([
+        'numbers' => [4,8,2,4,76,879,53,123,346,658,78,678]
+      ]);
+      return $this->view->render('static/welcome');
     }
   }
