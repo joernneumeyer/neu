@@ -21,6 +21,10 @@
     private Router $router;
     private DependencyResolver $dr;
 
+    public function dependencyResolver(): DependencyResolver {
+      return $this->dr;
+    }
+
     private static function loadHandlerAnnotationProcessors() {
       static $handlerAnnotationsProcessors;
       if (!$handlerAnnotationsProcessors) {
